@@ -86,6 +86,11 @@ public class CardGridArrayAdapter extends BaseCardArrayAdapter {
      */
     protected SwipeDismissListViewTouchListener mOnTouchListener;
 
+    /**
+     * List of cards represented in the ListView.
+     */
+    private List<Card> cards;
+
 
     // -------------------------------------------------------------
     // Constructors
@@ -99,6 +104,7 @@ public class CardGridArrayAdapter extends BaseCardArrayAdapter {
      */
     public CardGridArrayAdapter(Context context, List<Card> cards) {
         super(context, cards);
+        this.cards = cards;
     }
 
     // -------------------------------------------------------------
@@ -115,7 +121,7 @@ public class CardGridArrayAdapter extends BaseCardArrayAdapter {
         LayoutInflater mInflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
         //Retrieve card from items
-        mCard = (Card) getItem(position);
+        mCard = getItem(position);
         if (mCard != null) {
 
             int layout = mRowLayoutId;
@@ -150,7 +156,7 @@ public class CardGridArrayAdapter extends BaseCardArrayAdapter {
 
                 //If card has an expandable button override animation
                 if (mCard.getCardHeader() != null && mCard.getCardHeader().isButtonExpandVisible()) {
-                    setupExpandCollapseListAnimation(mCardView);
+                    //setupExpandCollapseListAnimation(mCardView);
                     Log.d(TAG, "Expand action not enabled in this type of view");
                 }
 
@@ -165,6 +171,16 @@ public class CardGridArrayAdapter extends BaseCardArrayAdapter {
         return view;
     }
 
+    @Override
+    public int getCount() {
+        return cards.size();
+    }
+
+    @Override
+    public Card getItem(int pos){
+        return cards.get(pos);
+    }
+
     /**
      * Removes SwipeAnimation on Grid
      *
@@ -174,20 +190,6 @@ public class CardGridArrayAdapter extends BaseCardArrayAdapter {
     protected void setupSwipeableAnimation(final Card card, CardView cardView) {
 
         cardView.setOnTouchListener(null);
-        /*if (card.isSwipeable()){
-            if (mOnTouchListener == null){
-                mOnTouchListener = new SwipeDismissListViewTouchListener(mCardGridView, mCallback);
-                // Setting this scroll listener is required to ensure that during
-                // ListView scrolling, we don't look for swipes.
-                mCardGridView.setOnScrollListener(mOnTouchListener.makeScrollListener());
-            }
-
-            cardView.setOnTouchListener(mOnTouchListener);
-        }else{
-            //prevent issue with recycle view
-            cardView.setOnTouchListener(null);
-        }*/
-
     }
 
     /**
@@ -201,31 +203,6 @@ public class CardGridArrayAdapter extends BaseCardArrayAdapter {
         cardView.setOnExpandListAnimatorListener(mCardGridView);
     }
 
-    // -------------------------------------------------------------
-    //  SwipeListener
-    // -------------------------------------------------------------
-    /**
-     * Listener invoked when a card is swiped
-     */
-    /*
-    SwipeDismissListViewTouchListener.DismissCallbacks mCallback = new SwipeDismissListViewTouchListener.DismissCallbacks() {
-
-        @Override
-        public boolean canDismiss(int position, Card card) {
-            return card.isSwipeable();
-        }
-
-        @Override
-        public void onDismiss(ListView listView, int[] reverseSortedPositions) {
-            for (int position : reverseSortedPositions) {
-                Card card = getItem(position);
-                if (card.getOnSwipeListener() != null)
-                    card.getOnSwipeListener().onSwipe(card);
-                remove(card);
-            }
-            notifyDataSetChanged();
-        }
-    };*/
 
     // -------------------------------------------------------------
     //  Getters and Setters

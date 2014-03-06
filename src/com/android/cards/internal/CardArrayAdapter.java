@@ -26,6 +26,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.ListView;
 
 import java.util.HashMap;
@@ -36,6 +37,7 @@ import com.android.cards.internal.base.BaseCardArrayAdapter;
 import com.android.cards.view.CardListView;
 import com.android.cards.view.CardView;
 import com.android.cards.view.listener.SwipeDismissListViewTouchListener;
+import com.android.cards.view.listener.SwipeOnScrollListener;
 import com.android.cards.view.listener.UndoBarController;
 import com.android.cards.view.listener.UndoCard;
 
@@ -197,20 +199,46 @@ public class CardArrayAdapter extends BaseCardArrayAdapter implements UndoBarCon
      * @param cardView {@link CardView}
      */
     protected void setupSwipeableAnimation(final Card card, CardView cardView) {
-
-        if (card.isSwipeable()){
-            if (mOnTouchListener == null){
+        HashMap<Integer, Card.OnLongCardClickListener> multipleOnLongClickListner =
+                card.getMultipleOnLongClickListener();
+        if (card.isSwipeable()) {
+            if (mOnTouchListener == null) {
                 mOnTouchListener = new SwipeDismissListViewTouchListener(mCardListView, mCallback);
                 // Setting this scroll listener is required to ensure that during
                 // ListView scrolling, we don't look for swipes.
-                mCardListView.setOnScrollListener(mOnTouchListener.makeScrollListener());
+                if (mCardListView.getOnScrollListener() == null) {
+                    SwipeOnScrollListener scrollListener = new SwipeOnScrollListener();
+                    scrollListener.setTouchListener(mOnTouchListener);
+                    mCardListView.setOnScrollListener(scrollListener);
+                } else {
+                    AbsListView.OnScrollListener onScrollListener=mCardListView.getOnScrollListener();
+                    if (onScrollListener instanceof SwipeOnScrollListener) {
+                        ((SwipeOnScrollListener) onScrollListener).setTouchListener(mOnTouchListener);
+                    }
+
+                }
+                mCardListView.setOnTouchListener(mOnTouchListener);
             }
-
             cardView.setOnTouchListener(mOnTouchListener);
-
-        }else{
+            // We may have partial onlongclicklistener. Restore onTouchListener for this views.
+            setPartialOnTouchListeners(cardView, mOnTouchListener, multipleOnLongClickListner);
+        } else {
             //prevent issue with recycle view
             cardView.setOnTouchListener(null);
+            setPartialOnTouchListeners(cardView, null, multipleOnLongClickListner);
+        }
+    }
+
+    private void setPartialOnTouchListeners(CardView cardView,
+            SwipeDismissListViewTouchListener onTouchListener,
+            HashMap<Integer, Card.OnLongCardClickListener> multipleOnLongClickListner) {
+        if (multipleOnLongClickListner != null && !multipleOnLongClickListner.isEmpty()) {
+            for (int key : multipleOnLongClickListner.keySet()) {
+                View viewLongClickable = cardView.decodeAreaOnClickListener(key);
+                if (viewLongClickable != null) {
+                    viewLongClickable.setOnTouchListener(mOnTouchListener);
+                }
+            }
         }
     }
 
